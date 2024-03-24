@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "remove-yt-shorts",
+  "description": "Remove youtube shorts",
+  "version": "1.0",
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": "remove-yt-shorts.png"
+  },
+  "content_scripts": [
+    {
+      "js": ["scripts/content.js"],
+      "matches": ["https://www.youtube.com/*"],
+      "run_at": "document_end"
+    }
+  ],
+  "permissions": ["activeTab"]
+}
