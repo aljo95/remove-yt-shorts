@@ -1,42 +1,49 @@
 
+/*
+*  Home page script with mutationObserver for subscription feed
+*/
+
 let loadFunc = window.onload
 window.onload = function(event) {
 
-  var display = "none"
-  var element = document.createElement("style")
-  element.id = "customStyleId"
-  element.innerHTML = ".customStyle { display: " + display + ";}"
-  document.getElementsByTagName('head')[0].appendChild(element)
-
-
-  const removeBtnAndGenerated = () => {
-     
-    /* Remove sections (rows) */ 
+  /* Remove sections (rows) */ 
+  const removeGenerated = () => {
     let shortsRow
     let count_one = 0
     const SRIntervalID = setInterval(() => {
       shortsRow = document.querySelectorAll("ytd-rich-section-renderer")
-      if (shortsRow.length > 0) {
+      if ((shortsRow.length > 0) && ((location.href === "https://www.youtube.com/") || (location.href === "https://www.youtube.com/feed/subscriptions"))) {
         for (let i=0; i<shortsRow.length; i++) {
           if (shortsRow[i]) {
             shortsRow[i].style.display = "none"
-            shortsRow[i].classList.add("customStyle")
           }
         }
         clearInterval(SRIntervalID)
       }
-      if (count_one > 10) clearInterval(btnIntervalID)
+      if (count_one > 10) clearInterval(SRIntervalID)
       count_one++
     }, 500)
+  }
 
-    /* Remove btn on side bar */
+  /* Remove btn on side bar */
+  const removeItemBtn = () => {
     let items
     let count_two = 0
     const btnIntervalID = setInterval(() => {
       items = document.querySelectorAll("#items")
-      if (items[1].children[1] !== null) {
-        items[1].children[1].style.display = "none";
-        clearInterval(btnIntervalID)
+      if ((items.length > 0) && (
+        (location.href === "https://www.youtube.com/") || 
+        (location.href === "https://www.youtube.com/feed/subscriptions")  ||
+        ((location.href).substring(0, 25) === "https://www.youtube.com/@") || 
+        ((location.href).substring(0, 31) === "https://www.youtube.com/channel") ||
+        ((location.href).substring(0, 29) === "https://www.youtube.com/user/")
+      )) {
+        if ((items[1] !== undefined) && (items[1].children !== undefined)) {
+          if (items[1].children[1] !== undefined) { /* Extreme checking because weird errors */
+            items[1].children[1].style.display = "none"
+            clearInterval(btnIntervalID)
+          }
+        } 
       }
       if (count_two > 10) clearInterval(btnIntervalID)
       count_two++
@@ -48,26 +55,71 @@ window.onload = function(event) {
     let sideShorts
     setTimeout(() => {
       sideShorts = document.querySelectorAll("ytd-rich-grid-slim-media")
-    }, 500)
-    if (sideShorts) {
-      for (let i=0; i<sideShorts.length; i++) {
-        if (sideShorts[i] && sideShorts[i].style != undefined)
-          sideShorts[i].style.display = "none"
+      if (sideShorts.length > 0) {
+        for (let i=0; i<sideShorts.length; i++) {
+          if (sideShorts[i] && sideShorts[i].style != undefined)
+            sideShorts[i].style.display = "none"
+        }
       }
-    }
+    }, 500)
   }
 
-  var observer = new MutationObserver(() => {
+  /* Calling funcs and MutationObservers */ 
+  removeGenerated()
+  removeItemBtn()
+  removeSingularShorts()
+
+  let observer = new MutationObserver(() => {
     removeSingularShorts()
   });
 
-  removeBtnAndGenerated()
-  removeSingularShorts()
   const config = { childList: true, characterData: true }
   setTimeout(() => {
-    let gridItemsContainer = document.querySelector("#primary").children[0].children[5]
-    observer.observe(gridItemsContainer, config)
+    let primary = document.querySelector("#primary");
+    let gridItemsContainer
+    if (primary && primary.children) {
+      gridItemsContainer = document.querySelector("#primary").children[0].children[5]
+      if (typeof gridItemsContainer === "Node")
+        observer.observe(gridItemsContainer, config)
+
+    }
   }, 1000)
+
+  let lastUrl = location.href
+  new MutationObserver(() => {
+    const url = location.href;
+    if (url !== lastUrl) {
+      lastUrl = url;
+      onUrlChange();
+    }
+  }).observe(document, {subtree: true, childList: true})
+
+  function onUrlChange() {
+    //console.log("last url: ", lastUrl)
+    //console.log('URL changed!', location.href)
+    
+    let shortsRow
+    let shortsRemix
+    setTimeout(() => {
+      shortsRow = document.querySelectorAll("ytd-rich-section-renderer")
+      if (shortsRow.length > 0) {
+        for (let i=0; i<shortsRow.length; i++) {
+          shortsRow[i].style.display = "none"
+        }
+      }
+    
+      shortsRemix = document.querySelectorAll("ytd-reel-shelf-renderer")
+      if (shortsRemix.length > 0 ) {
+        if (shortsRemix.length > 0) {
+          for (let i=0; i<shortsRemix.length; i++) {
+            shortsRemix[i].style.display = "none"
+          }
+        }
+      }
+    }, 3000)
+    //removeGenerated()
+    //removeItemBtn()
+  }
 
   if(loadFunc) loadFunc(event) 
 }
